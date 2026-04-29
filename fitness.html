@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fitness Monitor - Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #f0fdf4, #dcfce7);
+      padding: 20px;
+    }
+
+    .dashboard-container {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #166534;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .card h3 {
+      color: #065f46;
+    }
+
+    .btn {
+      background-color: #16a34a;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <h1>Welcome to Your Fitness Dashboard</h1>
+
+    <div class="card">
+      <h3>Your Body Condition Summary</h3>
+      <p id="summary"></p>
+    </div>
+
+    <div class="card">
+      <h3>Personalized Diet Suggestions</h3>
+      <p id="dietTips"></p>
+    </div>
+
+    <div class="card">
+      <h3>Recommended Exercise Plan</h3>
+      <p id="exercisePlan"></p>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <a href="progress.html" class="btn">Track My Progress</a>
+    </div>
+  </div>
+
+  <script>
+    const data = JSON.parse(localStorage.getItem("userCondition") || "{}");
+    const summary = `
+      <strong>Allergies:</strong> ${data.allergies || 'None'}<br>
+      <strong>Food Issues:</strong> ${data.foodIssues || 'None'}<br>
+      <strong>Health Conditions:</strong> ${data.healthConcerns || 'None'}<br>
+      <strong>Goals:</strong> ${data.goal || 'None'}
+    `;
+    document.getElementById("summary").innerHTML = summary;
+
+    // Very basic keyword check (you can improve this)
+    let dietTips = "", exercisePlan = "";
+    const fullText = (data.allergies + data.foodIssues + data.healthConcerns + data.goal).toLowerCase();
+
+    if (fullText.includes("diabetes")) {
+      dietTips += "Low-sugar foods, avoid sweets and white rice. Eat oats, greens, and millets.<br>";
+      exercisePlan += "Brisk walking 30 mins daily, yoga, and light strength training.<br>";
+    }
+
+    if (fullText.includes("pcod") || fullText.includes("pcos")) {
+      dietTips += "High-fiber diet: green veggies, nuts, seeds. Reduce sugar.<br>";
+      exercisePlan += "HIIT workouts, cardio, cycling, and strength training help regulate hormones.<br>";
+    }
+
+    if (fullText.includes("gain")) {
+      dietTips += "High-protein foods: chicken, paneer, pulses, banana smoothies.<br>";
+      exercisePlan += "Weight lifting, resistance bands, and calorie surplus.<br>";
+    }
+
+    if (dietTips === "") {
+      dietTips = "Eat balanced meals: protein, fiber, healthy carbs. Drink 2L+ water.";
+      exercisePlan = "Daily 30 mins walk, basic yoga, strength or bodyweight training.";
+    }
+
+    document.getElementById("dietTips").innerHTML = dietTips;
+    document.getElementById("exercisePlan").innerHTML = exercisePlan;
+  </script>
+</body>
+</html>

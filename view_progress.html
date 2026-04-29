@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Weekly Progress View</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #f0fdf4, #dcfce7);
+      margin: 0;
+      padding: 30px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #065f46;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+    }
+    th {
+      background-color: #10b981;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 30px;
+      background-color: #10b981;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .btn:hover {
+      background-color: #059669;
+    }
+    .chart-container {
+      margin-top: 50px;
+    }
+    canvas {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .summary {
+      margin-top: 20px;
+      font-weight: 500;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="reportContent">
+    <h1>Weekly Fitness Progress</h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Exercise</th>
+          <th>Diet</th>
+          <th>Water (L)</th>
+          <th>Mood</th>
+        </tr>
+      </thead>
+      <tbody id="progressTableBody">
+        <tr><td colspan="5">Loading...</td></tr>
+      </tbody>
+    </table>
+
+    <div class="chart-container">
+      <canvas id="progressChart" height="100"></canvas>
+    </div>
+
+    <div class="summary" id="summaryBox"></div>
+
+    <button class="btn" onclick="downloadPDF()">⬇ Download as PDF</button>
+    <button class="btn" onclick="logoutUser()">🔒 Logout</button>
+    <a href="home.html" class="btn">← Back to Home</a>
+  </div>
+
+  <script>
+    const userEmail = localStorage.getItem("userEmail");
+
+    const daysOrder = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const waterData = {}, moodScores = {}, exercises = {}, diets = {};
+
+    const moodMap = {
+      "happy": 5,
+      "okay": 3,
+      "tired": 2,
+      "sad": 1
+    };
+
+    function getMoodScore(mood) {
+      if (!mood) return 0;
+      const moodLower = mood.toLowerCase().split(" ")[0];
+      return moodMap[moodLower] || 0;
+    }
+
+    fetch("http://127.0.0.1:5000/view_progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: userEmail })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById("progressTableBody");
+      tbody.innerHTML = "";
+
+      if (data.status === "success" && data.data.length > 0) {
+        const weekData = {};
+
+        data.data.forEach(entry => {
+          const day = entry.day;
+          weekData[day] = entry;
+
+          waterData[day] = parseFloat(entry.water);
+          moodScores[day] = getMoodScore(entry.mood);
+          exercises[day] = entry.exercise;
+          diets[day] = entry.diet;
+        });
+
+        daysOrder.forEach(day => {
+          const entry = weekData[day];
+          if (entry) {
+            const row = `
+              <tr>
+                <td>${day}</td>
+                <td>${entry.exercise}</td>
+                <td>${entry.diet}</td>
+                <td>${entry.water}</td>
+                <td>${entry.mood}</td>
+              </tr>`;
+            tbody.innerHTML += row;
+          }
+        });
+
+        renderChart();
+        showSummary();
+      } else {
+        tbody.innerHTML = `<tr><td colspan="5">No progress data found.</td></tr>`;
+      }
+    })
+    .catch(err => {
+      document.getElementById("progressTableBody").innerHTML = `<tr><td colspan="5">⚠️ Error fetching data</td></tr>`;
+      console.error(err);
+    });
+
+    function renderChart() {
+      const ctx = document.getElementById("progressChart").getContext("2d");
+
+      const labels = daysOrder.filter(day => waterData[day] || moodScores[day]);
+      const waterValues = labels.map(day => waterData[day] || 0);
+      const moodValues = labels.map(day => moodScores[day] || 0);
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Water Intake (L)',
+              data: waterValues,
+              backgroundColor: '#34d399'
+            },
+            {
+              label: 'Mood Score (1–5)',
+              data: moodValues,
+              backgroundColor: '#60a5fa'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Weekly Water Intake & Mood Score' }
+          }
+        }
+      });
+    }
+
+    function showSummary() {
+      const waterAvg = average(Object.values(waterData));
+      const moodAvg = average(Object.values(moodScores));
+
+      document.getElementById("summaryBox").innerHTML = `
+        📊 <b>Average Water Intake:</b> ${waterAvg.toFixed(2)} L<br>
+        😊 <b>Average Mood Score:</b> ${moodAvg.toFixed(2)} / 5
+      `;
+    }
+
+    function average(arr) {
+      if (!arr.length) return 0;
+      const sum = arr.reduce((a, b) => a + b, 0);
+      return sum / arr.length;
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById("reportContent");
+      html2pdf().from(element).set({
+        margin: 1,
+        filename: 'Weekly_Fitness_Report.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      }).save();
+    }
+
+    function logoutUser() {
+      localStorage.removeItem("userEmail");
+      alert("✅ Logged out successfully!");
+      window.location.href = "home.html";
+    }
+  </script>
+</body>
+</html>

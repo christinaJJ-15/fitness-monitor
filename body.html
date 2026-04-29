@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fitness Monitor - Body Examination</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #f8fafc, #e0f2fe);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .exam-container {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h2 {
+      text-align: center;
+      color: #1e3a8a;
+    }
+
+    label, textarea {
+      display: block;
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    textarea {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      min-height: 80px;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #1e40af;
+    }
+  </style>
+</head>
+<body>
+  <div class="exam-container">
+    <h2>Body Condition Examination</h2>
+    <form id="examForm">
+      <label>Do you have any known allergies?</label>
+      <textarea id="allergies"></textarea>
+
+      <label>Foods that don't suit you?</label>
+      <textarea id="foodIssues"></textarea>
+
+      <label>Any health conditions?</label>
+      <textarea id="healthConcerns"></textarea>
+
+      <label>Your fitness goal?</label>
+      <textarea id="goal"></textarea>
+
+      <button type="submit">Submit & Continue</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('examForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const allergies = document.getElementById('allergies').value;
+      const foodIssues = document.getElementById('foodIssues').value;
+      const healthConcerns = document.getElementById('healthConcerns').value;
+      const goal = document.getElementById('goal').value;
+
+      const bodyData = {
+        allergies,
+        foodIssues,
+        healthConcerns,
+        goal
+      };
+
+      try {
+        const response = await fetch("http://localhost:5000/bodydata", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bodyData)
+        });
+
+        const result = await response.json();
+        if (result.status === "success") {
+          localStorage.setItem("userCondition", JSON.stringify(bodyData));
+          alert("✅ Data saved! Redirecting...");
+          window.location.href = "fitness.html";
+        } else {
+          alert("❌ Something went wrong. Try again.");
+        }
+      } catch (err) {
+        alert("❌ Server error.");
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

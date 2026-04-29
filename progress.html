@@ -1,0 +1,154 @@
+<!-- progress.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Log Your Fitness Progress</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #fef9f9, #ecfdf5);
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #047857;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #064e3b;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+
+    button {
+      margin-top: 25px;
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 14px 22px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background: #059669;
+    }
+
+    .link {
+      margin-top: 30px;
+      display: block;
+      text-align: center;
+    }
+
+    .link a {
+      color: #047857;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Log Today’s Activity</h1>
+    <form id="progressForm">
+      <label for="day">Day:</label>
+      <select id="day" required>
+        <option value="">--Select Day--</option>
+        <option>Sunday</option>
+        <option>Monday</option>
+        <option>Tuesday</option>
+        <option>Wednesday</option>
+        <option>Thursday</option>
+        <option>Friday</option>
+        <option>Saturday</option>
+      </select>
+
+      <label for="exercise">Exercise:</label>
+      <input type="text" id="exercise" placeholder="e.g., 30 mins walk" required />
+
+      <label for="diet">Meals Summary:</label>
+      <textarea id="diet" rows="4" placeholder="e.g., oats for breakfast, rice for lunch" required></textarea>
+
+      <label for="water">Water Intake (litres):</label>
+      <input type="number" id="water" step="0.1" min="0" required />
+
+      <label for="mood">Mood:</label>
+      <select id="mood" required>
+        <option value="">--Select--</option>
+        <option>Happy 😊</option>
+        <option>Okay 😐</option>
+        <option>Tired 😩</option>
+        <option>Sad 😔</option>
+      </select>
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <div class="link">
+      <a href="view_progress.html">📊 View Weekly Report</a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("progressForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const email = localStorage.getItem("userEmail");
+      if (!email) {
+        alert("Please login first.");
+        return;
+      }
+
+      const data = {
+        email,
+        day: document.getElementById("day").value,
+        exercise: document.getElementById("exercise").value,
+        diet: document.getElementById("diet").value,
+        water: document.getElementById("water").value,
+        mood: document.getElementById("mood").value,
+        date: new Date().toISOString()
+      };
+
+      const res = await fetch("http://127.0.0.1:5000/save_progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+      alert(result.message);
+
+      if (result.status === "success") {
+        document.getElementById("progressForm").reset();
+      }
+    });
+  </script>
+</body>
+</html>
